@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Details – Online Library</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="brand" href="#" id="brand-link">📚 Online Library</a>
+    <div id="main-nav"></div>
+  </nav>
+</header>
+
+<div class="page-title">
+  <h1>Book Details</h1>
+  <p>Full information about this book</p>
+</div>
+
+<main>
+  <div id="book-content">
+    <p style="color:var(--grey);">Loading book details…</p>
+  </div>
+</main>
+
+<footer>© 2026 Online Library System</footer>
+
+<script src="nav.js"></script>
+<script>
+  const user = requireAuth(false);
+  seedBooksIfEmpty();
+
+  // Fix brand link based on role
+  if (user) {
+    document.getElementById('brand-link').href = user.is_admin ? 'home_admin.html' : 'home_user.html';
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const bookId = parseInt(params.get('id'));
+
+  function renderDetails() {
+    const book = getBooks().find(b => b.id === bookId);
+    const div  = document.getElementById('book-content');
+
+    if (!book) {
+      div.innerHTML = '<p style="color:var(--accent);">Book not found.</p>';
+      return;
+    }
+
+    const borrowed = JSON.parse(localStorage.getItem('library_borrowed') || '[]');
+    const isBorrowedByMe = user && borrowed.find(b => b.bookId === book.id && b.userId === user.id);
+
+    div.innerHTML = `
+      <div class="detail-card">
+        <h2>${esc(book.name)}</h2>
+        <div class="detail-meta">
+          <span>By <strong>${esc(book.author)}</strong></span>
+          <span>Category: <strong>${esc(book.category)}</strong></span>
+          <span>Year: <strong>${book.year || 'N/A'}</strong></span>
+          <span>Pages: <strong>${book.pages || 'N/A'}</strong></span>
+        </div>
+
+        <div class="detail-field">
+          <label>Availability</label>
+          <p>
+            <span class="state ${book.available ? 'available' : 'borrowed'}">
+              ${book.available ? 'Available' : 'Currently Borrowed'}
+            </span>
+          </p>
+        </div>
+
+        <div class="detail-field">
+          <label>Description</label>
+          <p>${esc(book.description || 'No description available.')}</p>
+        </div>
+
+        <div class="detail-field">
+          <label>Book ID</label>
+          <p>${book.id}</p>
+        </div>
+
+        <div style="display:flex; gap:.75rem; margin-top:1.25rem; flex-wrap:wrap;">
+          <button onclick="history.back()" class="btn btn-secondary">← Back</button>
+          ${!user?.is_admin && book.available && !isBorrowedByMe
+            ? `<button class="btn btn-success" onclick="borrowBook(${book.id})">Borrow This Book</button>`
+            : ''}
+          ${isBorrowedByMe
+            ? `<button class="btn btn-danger" onclick="returnBook(${book.id})">Return This Book</button>`
+            : ''}
+          ${user?.is_admin
+            ? `<a href="edit_book.html?id=${book.id}" class="btn btn-primary">Edit Book</a>`
+            : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function borrowBook(id) {
+    const borrowed = JSON.parse(localStorage.getItem('library_borrowed') || '[]');
+    borrowed.push({ userId: user.id, bookId: id, borrowDate: new Date().toISOString(), dueDate: new Date(Date.now() + 14*864e5).toISOString() });
+    localStorage.setItem('library_borrowed', JSON.stringify(borrowed));
+    saveBooks(getBooks().map(b => b.id === id ? {...b, available: false} : b));
+    alert('Book borrowed successfully! Return within 14 days.');
+    renderDetails();
+  }
+
+  function returnBook(id) {
+    if (!confirm('Return this book?')) return;
+    let borrowed = JSON.parse(localStorage.getItem('library_borrowed') || '[]');
+    borrowed = borrowed.filter(b => !(b.bookId === id && b.userId === user.id));
+    localStorage.setItem('library_borrowed', JSON.stringify(borrowed));
+    saveBooks(getBooks().map(b => b.id === id ? {...b, available: true} : b));
+    alert('Book returned successfully!');
+    renderDetails();
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  renderDetails();
+</script>
+
+</body>
+</html>

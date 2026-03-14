@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Borrowed Books – Online Library</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="brand" href="home_user.html">📚 Online Library</a>
+    <div id="main-nav"></div>
+  </nav>
+</header>
+
+<div class="page-title">
+  <h1>My Borrowed Books</h1>
+  <p>Books you currently have checked out — borrow duration: <strong>14 days</strong></p>
+</div>
+
+<main>
+  <div style="margin-bottom:1rem;">
+    <span style="font-size:.9rem; color:var(--grey);">Current Time: </span>
+    <strong id="current-time" style="font-size:.9rem;"></strong>
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="check-all" onchange="toggleAll(this)" /></th>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Category</th>
+          <th>Borrow Date</th>
+          <th>Due Date</th>
+          <th>Remaining</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="borrowed-table-body"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:1rem;">
+    <button class="btn btn-danger btn-sm" onclick="returnSelected()">Return Selected</button>
+  </div>
+</main>
+
+<footer>© 2026 Online Library System</footer>
+
+<script src="nav.js"></script>
+<script>
+  const user = requireAuth(false);
+  seedBooksIfEmpty();
+
+  // Live clock
+  function updateClock() {
+    document.getElementById('current-time').textContent = new Date().toLocaleString();
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  function renderTable() {
+    const borrowed = JSON.parse(localStorage.getItem('library_borrowed') || '[]')
+                       .filter(b => b.userId === user.id);
+    const books    = getBooks();
+    const tbody    = document.getElementById('borrowed-table-body');
+    tbody.innerHTML = '';
+
+    if (borrowed.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--grey);padding:2rem;">You have no borrowed books.</td></tr>';
+      return;
+    }
+
+    borrowed.forEach(entry => {
+      const book       = books.find(b => b.id === entry.bookId) || {};
+      const dueDate    = new Date(entry.dueDate);
+      const now        = new Date();
+      const diffMs     = dueDate - now;
+      const diffDays   = Math.ceil(diffMs / 864e5);
+      const overdue    = diffDays < 0;
+      const remaining  = overdue
+        ? `<span style="color:var(--accent);font-weight:700;">Overdue by ${Math.abs(diffDays)} day(s)</span>`
+        : `<span style="color:var(--green);font-weight:600;">${diffDays} day(s)</span>`;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" class="row-check" value="${entry.bookId}" /></td>
+        <td>${entry.bookId}</td>
+        <td>${esc(book.name || 'Unknown')}</td>
+        <td>${esc(book.author || '—')}</td>
+        <td>${esc(book.category || '—')}</td>
+        <td>${new Date(entry.borrowDate).toLocaleDateString()}</td>
+        <td>${dueDate.toLocaleDateString()}</td>
+        <td>${remaining}</td>
+        <td>
+          <a href="book_details.html?id=${entry.bookId}" class="btn btn-secondary btn-sm">Details</a>
+          <button class="btn btn-danger btn-sm" onclick="returnOne(${entry.bookId})">Return</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function toggleAll(master) {
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = master.checked);
+  }
+
+  function returnOne(bookId) {
+    if (!confirm('Return this book?')) return;
+    let borrowed = JSON.parse(localStorage.getItem('library_borrowed') || '[]');
+    borrowed = borrowed.filter(b => !(b.bookId === bookId && b.userId === user.id));
+    localStorage.setItem('library_borrowed', JSON.stringify(borrowed));
+    saveBooks(getBooks().map(b => b.id === bookId ? {...b, available: true} : b));
+    renderTable();
+  }
+
+  function returnSelected() {
+    const ids = [...document.querySelectorAll('.row-check:checked')].map(c => parseInt(c.value));
+    if (ids.length === 0) { alert('No books selected.'); return; }
+    if (!confirm(`Return ${ids.length} book(s)?`)) return;
+    let borrowed = JSON.parse(localStorage.getItem('library_borrowed') || '[]');
+    borrowed = borrowed.filter(b => !(ids.includes(b.bookId) && b.userId === user.id));
+    localStorage.setItem('library_borrowed', JSON.stringify(borrowed));
+    saveBooks(getBooks().map(b => ids.includes(b.id) ? {...b, available: true} : b));
+    renderTable();
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  renderTable();
+</script>
+
+</body>
+</html>

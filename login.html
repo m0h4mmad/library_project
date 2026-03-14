@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login – Online Library</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <div class="auth-box">
+    <div class="logo">📚 Online Library</div>
+    <p class="subtitle">Welcome back – please sign in to continue</p>
+
+    <div id="error-msg" class="alert alert-error" style="display:none;"></div>
+
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username"
+             placeholder="Enter your username" required autocomplete="username" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password"
+             placeholder="Enter your password" required autocomplete="current-password" />
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="handleLogin()">Sign In</button>
+
+    <div class="switch-link" style="margin-top:1.1rem;">
+      Don't have an account? <a href="signup.html">Create one</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // If already logged in, redirect to correct home
+  (function() {
+    const existing = JSON.parse(localStorage.getItem('library_current_user') || 'null');
+    if (existing) {
+      window.location.href = existing.is_admin ? 'home_admin.html' : 'home_user.html';
+    }
+  })();
+
+  function handleLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value; // do NOT trim passwords
+    const errorDiv = document.getElementById('error-msg');
+
+    errorDiv.style.display = 'none';
+
+    if (!username || !password) {
+      errorDiv.textContent = 'Please fill in all fields.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    if (username.length < 3) {
+      errorDiv.textContent = 'Username must be at least 3 characters.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    if (password.length < 6) {
+      errorDiv.textContent = 'Password must be at least 6 characters.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    // Retrieve registered users from localStorage
+    const users = JSON.parse(localStorage.getItem('library_users') || '[]');
+    const user = users.find(u => u.username === username && u.password === password);
+
+    if (!user) {
+      errorDiv.textContent = 'Invalid username or password.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    // Save session
+    localStorage.setItem('library_current_user', JSON.stringify(user));
+
+    // Redirect based on role
+    if (user.is_admin) {
+      window.location.href = 'home_admin.html';
+    } else {
+      window.location.href = 'home_user.html';
+    }
+  }
+
+  // Allow Enter key to submit
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') handleLogin();
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Available Books – Online Library</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="brand" href="home_user.html">📚 Online Library</a>
+    <div id="main-nav"></div>
+  </nav>
+</header>
+
+<div class="page-title">
+  <h1>Browse Books</h1>
+  <p>Search and filter books – borrow any available title</p>
+</div>
+
+<main>
+  <div class="search-bar">
+    <input type="search" id="search-input" placeholder="Search by title, author or category…" oninput="renderTable()" />
+    <select id="filter-category" onchange="renderTable()">
+      <option value="">All Categories</option>
+    </select>
+    <select id="filter-status" onchange="renderTable()">
+      <option value="">All Statuses</option>
+      <option value="true">Available</option>
+      <option value="false">Not Available</option>
+    </select>
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" /></th>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="book-table-body"></tbody>
+    </table>
+  </div>
+</main>
+
+<footer>© 2026 Online Library System</footer>
+
+<script src="nav.js"></script>
+<script>
+  requireAuth(false);
+  seedBooksIfEmpty();
+
+  function populateCategories() {
+    const cats = [...new Set(getBooks().map(b => b.category))].sort();
+    const sel  = document.getElementById('filter-category');
+    cats.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c; sel.appendChild(o);
+    });
+  }
+
+  function renderTable() {
+    const query  = document.getElementById('search-input').value.toLowerCase();
+    const cat    = document.getElementById('filter-category').value;
+    const status = document.getElementById('filter-status').value;
+
+    const books = getBooks().filter(b => {
+      const matchQ = b.name.toLowerCase().includes(query) ||
+                     b.author.toLowerCase().includes(query) ||
+                     b.category.toLowerCase().includes(query);
+      const matchC = !cat    || b.category === cat;
+      const matchS = status === '' || String(b.available) === status;
+      return matchQ && matchC && matchS;
+    });
+
+    const tbody = document.getElementById('book-table-body');
+    tbody.innerHTML = '';
+
+    if (books.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--grey);padding:2rem;">No books found.</td></tr>';
+      return;
+    }
+
+    books.forEach(book => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" /></td>
+        <td>${book.id}</td>
+        <td>${esc(book.name)}</td>
+        <td>${esc(book.author)}</td>
+        <td>${esc(book.category)}</td>
+        <td><span class="state ${book.available ? 'available' : 'borrowed'}">${book.available ? 'Available' : 'Not Available'}</span></td>
+        <td>
+          <a href="book_details.html?id=${book.id}" class="btn btn-secondary btn-sm">Details</a>
+          ${book.available
+            ? `<button class="btn btn-success btn-sm" onclick="borrowBook(${book.id})">Borrow</button>`
+            : ''}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function borrowBook(id) {
+    const u = JSON.parse(localStorage.getItem('library_current_user'));
+    const borrowed = JSON.parse(localStorage.getItem('library_borrowed') || '[]');
+    if (borrowed.find(b => b.bookId === id && b.userId === u.id)) {
+      alert('You already borrowed this book.');
+      return;
+    }
+    borrowed.push({ userId: u.id, bookId: id, borrowDate: new Date().toISOString(), dueDate: new Date(Date.now() + 14*864e5).toISOString() });
+    localStorage.setItem('library_borrowed', JSON.stringify(borrowed));
+    saveBooks(getBooks().map(b => b.id === id ? {...b, available: false} : b));
+    renderTable();
+    alert('Book borrowed! Return within 14 days.');
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  populateCategories();
+  renderTable();
+</script>
+
+</body>
+</html>

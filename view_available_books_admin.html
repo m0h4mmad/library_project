@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Books (Admin) – Online Library</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="brand" href="home_admin.html">📚 Online Library</a>
+    <div id="main-nav"></div>
+  </nav>
+</header>
+
+<div class="page-title">
+  <h1>Library Book List</h1>
+  <p>Manage all books — edit, delete, or add new entries</p>
+</div>
+
+<main>
+  <div class="toolbar">
+    <div class="search-bar" style="margin-bottom:0; flex:1;">
+      <input type="search" id="search-input" placeholder="Search title, author, category…" oninput="renderTable()" />
+      <select id="filter-status" onchange="renderTable()">
+        <option value="">All Statuses</option>
+        <option value="true">Available</option>
+        <option value="false">Borrowed</option>
+      </select>
+    </div>
+    <a href="add_book.html" class="btn btn-primary btn-sm">+ Add Book</a>
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="check-all" onchange="toggleAll(this)" /></th>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Category</th>
+          <th>Year</th>
+          <th>Pages</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="book-table-body"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:1rem;">
+    <button class="btn btn-danger btn-sm" onclick="deleteSelected()">Delete Selected</button>
+    <span id="row-count" style="margin-left:1rem; font-size:.85rem; color:var(--grey);"></span>
+  </div>
+</main>
+
+<footer>© 2026 Online Library System</footer>
+
+<script src="nav.js"></script>
+<script>
+  requireAuth(true);
+  seedBooksIfEmpty();
+
+  function renderTable() {
+    const query  = document.getElementById('search-input').value.toLowerCase();
+    const status = document.getElementById('filter-status').value;
+    const books  = getBooks().filter(b => {
+      const matchQ = b.name.toLowerCase().includes(query) ||
+                     b.author.toLowerCase().includes(query) ||
+                     b.category.toLowerCase().includes(query);
+      const matchS = status === '' || String(b.available) === status;
+      return matchQ && matchS;
+    });
+
+    const tbody = document.getElementById('book-table-body');
+    tbody.innerHTML = '';
+    document.getElementById('row-count').textContent = books.length + ' book(s)';
+
+    if (books.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--grey);padding:2rem;">No books found.</td></tr>';
+      return;
+    }
+
+    books.forEach(book => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" class="row-check" value="${book.id}" /></td>
+        <td>${book.id}</td>
+        <td>${esc(book.name)}</td>
+        <td>${esc(book.author)}</td>
+        <td>${esc(book.category)}</td>
+        <td>${book.year || '—'}</td>
+        <td>${book.pages || '—'}</td>
+        <td><span class="state ${book.available ? 'available' : 'borrowed'}">${book.available ? 'Available' : 'Borrowed'}</span></td>
+        <td>
+          <a href="edit_book.html?id=${book.id}" class="btn btn-secondary btn-sm">Edit</a>
+          <button class="btn btn-danger btn-sm" onclick="deleteOne(${book.id})">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function toggleAll(master) {
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = master.checked);
+  }
+
+  function deleteOne(id) {
+    if (!confirm('Delete this book permanently?')) return;
+    saveBooks(getBooks().filter(b => b.id !== id));
+    renderTable();
+  }
+
+  function deleteSelected() {
+    const checked = [...document.querySelectorAll('.row-check:checked')].map(c => parseInt(c.value));
+    if (checked.length === 0) { alert('No books selected.'); return; }
+    if (!confirm(`Delete ${checked.length} book(s) permanently?`)) return;
+    saveBooks(getBooks().filter(b => !checked.includes(b.id)));
+    renderTable();
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  renderTable();
+</script>
+
+</body>
+</html>

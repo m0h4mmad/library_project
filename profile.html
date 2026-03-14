@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile – Online Library</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="brand" href="#" id="brand-link">📚 Online Library</a>
+    <div id="main-nav"></div>
+  </nav>
+</header>
+
+<div class="page-title">
+  <h1>My Profile</h1>
+  <p>View and update your account information</p>
+</div>
+
+<main>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.5rem; max-width:800px; margin:0 auto;">
+
+    <!-- Profile Info -->
+    <div class="card">
+      <div class="section-label">Account Information</div>
+      <div id="error-msg"   class="alert alert-error"   style="display:none;"></div>
+      <div id="success-msg" class="alert alert-success" style="display:none;"></div>
+
+      <div class="form-group" style="margin-top:.8rem;">
+        <label for="username">Username</label>
+        <input type="text" id="username" required minlength="3" />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" required />
+      </div>
+
+      <div class="form-group">
+        <label>Account Type</label>
+        <input type="text" id="role" readonly style="background:#e8e3da; cursor:not-allowed;" />
+      </div>
+
+      <div class="form-group">
+        <label>Member Since</label>
+        <input type="text" id="member-since" readonly style="background:#e8e3da; cursor:not-allowed;" />
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
+    </div>
+
+    <!-- Change Password -->
+    <div class="card">
+      <div class="section-label">Change Password</div>
+      <div id="pw-error"   class="alert alert-error"   style="display:none;margin-top:.5rem;"></div>
+      <div id="pw-success" class="alert alert-success" style="display:none;margin-top:.5rem;"></div>
+
+      <div class="form-group" style="margin-top:.8rem;">
+        <label for="current-pw">Current Password</label>
+        <input type="password" id="current-pw" placeholder="Enter current password" />
+      </div>
+
+      <div class="form-group">
+        <label for="new-pw">New Password</label>
+        <input type="password" id="new-pw" placeholder="Min. 6 characters" minlength="6" />
+      </div>
+
+      <div class="form-group">
+        <label for="confirm-pw">Confirm New Password</label>
+        <input type="password" id="confirm-pw" placeholder="Re-enter new password" />
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="changePassword()">Update Password</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div id="stats-area" style="max-width:800px; margin:1.5rem auto 0;"></div>
+
+  <!-- Logout -->
+  <div style="text-align:center; margin-top:2rem;">
+    <button class="btn btn-danger" onclick="logout()">Log Out</button>
+  </div>
+</main>
+
+<footer>© 2026 Online Library System</footer>
+
+<script src="nav.js"></script>
+<script>
+  const currentUser = requireAuth(false);
+  if (!currentUser) { /* requireAuth already redirected */ }
+
+  // Fix brand link based on role
+  if (currentUser) {
+    document.getElementById('brand-link').href = currentUser.is_admin ? 'home_admin.html' : 'home_user.html';
+  }
+
+  function loadProfile() {
+    document.getElementById('username').value    = currentUser.username;
+    document.getElementById('email').value       = currentUser.email;
+    document.getElementById('role').value        = currentUser.is_admin ? 'Admin' : 'User';
+    document.getElementById('member-since').value= currentUser.id
+      ? new Date(currentUser.id).toLocaleDateString() : 'N/A';
+
+    // Stats
+    const statsArea = document.getElementById('stats-area');
+    if (currentUser.is_admin) {
+      const total = getBooks().length;
+      const avail = getBooks().filter(b => b.available).length;
+      statsArea.innerHTML = `
+        <div class="card" style="text-align:center;">
+          <div class="section-label">Library Overview</div>
+          <div style="display:flex; gap:2rem; justify-content:center; margin-top:1rem; flex-wrap:wrap;">
+            <div><div style="font-size:2rem;font-weight:700;color:var(--brown-md);">${total}</div><small>Total Books</small></div>
+            <div><div style="font-size:2rem;font-weight:700;color:var(--green);">${avail}</div><small>Available</small></div>
+            <div><div style="font-size:2rem;font-weight:700;color:var(--accent);">${total - avail}</div><small>Borrowed</small></div>
+          </div>
+        </div>`;
+    } else {
+      const borrowed = JSON.parse(localStorage.getItem('library_borrowed') || '[]').filter(b => b.userId === currentUser.id);
+      statsArea.innerHTML = `
+        <div class="card" style="text-align:center;">
+          <div class="section-label">My Activity</div>
+          <div style="display:flex; gap:2rem; justify-content:center; margin-top:1rem; flex-wrap:wrap;">
+            <div><div style="font-size:2rem;font-weight:700;color:var(--brown-md);">${borrowed.length}</div><small>Books Borrowed</small></div>
+          </div>
+          <div style="margin-top:1rem;">
+            <a href="view_borrowed.html" class="btn btn-secondary btn-sm">View Borrowed List</a>
+          </div>
+        </div>`;
+    }
+  }
+
+  function saveProfile() {
+    const username = document.getElementById('username').value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const errDiv   = document.getElementById('error-msg');
+    const sucDiv   = document.getElementById('success-msg');
+    errDiv.style.display = sucDiv.style.display = 'none';
+
+    if (!username || !email) {
+      errDiv.textContent = 'All fields are required.'; errDiv.style.display = 'block'; return;
+    }
+    if (username.length < 3) {
+      errDiv.textContent = 'Username must be at least 3 characters.'; errDiv.style.display = 'block'; return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errDiv.textContent = 'Please enter a valid email.'; errDiv.style.display = 'block'; return;
+    }
+
+    // Check duplicate username (excluding self)
+    const users = JSON.parse(localStorage.getItem('library_users') || '[]');
+    if (users.find(u => u.username === username && u.id !== currentUser.id)) {
+      errDiv.textContent = 'Username already taken.'; errDiv.style.display = 'block'; return;
+    }
+
+    const updated = users.map(u => u.id === currentUser.id ? {...u, username, email} : u);
+    localStorage.setItem('library_users', JSON.stringify(updated));
+    const updatedUser = {...currentUser, username, email};
+    localStorage.setItem('library_current_user', JSON.stringify(updatedUser));
+
+    sucDiv.textContent = 'Profile updated successfully!'; sucDiv.style.display = 'block';
+  }
+
+  function changePassword() {
+    const current = document.getElementById('current-pw').value;
+    const newPw   = document.getElementById('new-pw').value;
+    const confirm = document.getElementById('confirm-pw').value;
+    const errDiv  = document.getElementById('pw-error');
+    const sucDiv  = document.getElementById('pw-success');
+    errDiv.style.display = sucDiv.style.display = 'none';
+
+    if (!current || !newPw || !confirm) {
+      errDiv.textContent = 'All password fields are required.'; errDiv.style.display = 'block'; return;
+    }
+    if (current !== currentUser.password) {
+      errDiv.textContent = 'Current password is incorrect.'; errDiv.style.display = 'block'; return;
+    }
+    if (newPw.length < 6) {
+      errDiv.textContent = 'New password must be at least 6 characters.'; errDiv.style.display = 'block'; return;
+    }
+    if (newPw !== confirm) {
+      errDiv.textContent = 'New passwords do not match.'; errDiv.style.display = 'block'; return;
+    }
+
+    const users   = JSON.parse(localStorage.getItem('library_users') || '[]');
+    const updated = users.map(u => u.id === currentUser.id ? {...u, password: newPw} : u);
+    localStorage.setItem('library_users', JSON.stringify(updated));
+    localStorage.setItem('library_current_user', JSON.stringify({...currentUser, password: newPw}));
+
+    sucDiv.textContent = 'Password changed! Please log in again.'; sucDiv.style.display = 'block';
+    setTimeout(logout, 1800);
+  }
+
+  loadProfile();
+</script>
+
+</body>
+</html>

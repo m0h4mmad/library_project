@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up – Online Library</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <div class="auth-box">
+    <div class="logo">📚 Online Library</div>
+    <p class="subtitle">Create your account to get started</p>
+
+    <div id="error-msg"   class="alert alert-error"   style="display:none;"></div>
+    <div id="success-msg" class="alert alert-success" style="display:none;"></div>
+
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username"
+             placeholder="Choose a username" required minlength="3" />
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" name="email"
+             placeholder="your@email.com" required />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password"
+             placeholder="Min. 6 characters" required minlength="6" />
+    </div>
+
+    <div class="form-group">
+      <label for="confirm-password">Confirm Password</label>
+      <input type="password" id="confirm-password" name="confirm-password"
+             placeholder="Re-enter your password" required />
+    </div>
+
+    <div class="form-group">
+      <label for="role">Account Type</label>
+      <select id="role" name="is_admin">
+        <option value="false">User – Browse &amp; borrow books</option>
+        <option value="true">Admin – Manage the library</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="handleSignup()">Create Account</button>
+
+    <div class="switch-link" style="margin-top:1.1rem;">
+      Already have an account? <a href="login.html">Sign in</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function handleSignup() {
+    const username = document.getElementById('username').value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value; // do NOT trim passwords
+    const confirm  = document.getElementById('confirm-password').value; // do NOT trim
+    const isAdmin  = document.getElementById('role').value === 'true';
+
+    const errorDiv   = document.getElementById('error-msg');
+    const successDiv = document.getElementById('success-msg');
+    errorDiv.style.display   = 'none';
+    successDiv.style.display = 'none';
+
+    // Validation
+    if (!username || !email || !password || !confirm) {
+      showError('Please fill in all fields.');
+      return;
+    }
+    if (username.length < 3) {
+      showError('Username must be at least 3 characters.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showError('Please enter a valid email address.');
+      return;
+    }
+    if (password.length < 6) {
+      showError('Password must be at least 6 characters.');
+      return;
+    }
+    if (password !== confirm) {
+      showError('Passwords do not match.');
+      return;
+    }
+
+    // Check for existing username
+    const users = JSON.parse(localStorage.getItem('library_users') || '[]');
+    if (users.find(u => u.username === username)) {
+      showError('This username is already taken. Please choose another.');
+      return;
+    }
+    if (users.find(u => u.email === email)) {
+      showError('An account with this email already exists.');
+      return;
+    }
+
+    // Save new user
+    const newUser = { id: Date.now(), username, email, password, is_admin: isAdmin };
+    users.push(newUser);
+    localStorage.setItem('library_users', JSON.stringify(users));
+
+    successDiv.textContent = 'Account created! Redirecting to login…';
+    successDiv.style.display = 'block';
+
+    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+
+    function showError(msg) {
+      errorDiv.textContent   = msg;
+      errorDiv.style.display = 'block';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') handleSignup();
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Book – Online Library</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="brand" href="home_admin.html">📚 Online Library</a>
+    <div id="main-nav"></div>
+  </nav>
+</header>
+
+<div class="page-title">
+  <h1>Edit Book</h1>
+  <p>Update the details of this book</p>
+</div>
+
+<main>
+  <div class="form-box" style="max-width:600px;">
+    <div id="error-msg"   class="alert alert-error"   style="display:none;"></div>
+    <div id="success-msg" class="alert alert-success" style="display:none;"></div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Book ID</label>
+        <input type="number" id="book-id" readonly style="background:#e8e3da; cursor:not-allowed;" />
+      </div>
+      <div class="form-group">
+        <label for="year">Publication Year</label>
+        <input type="number" id="year" required min="1000" max="2099" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="book-name">Book Title</label>
+      <input type="text" id="book-name" required />
+    </div>
+
+    <div class="form-group">
+      <label for="author">Author</label>
+      <input type="text" id="author" required />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="category">Category</label>
+        <select id="category" required>
+          <option value="">Select a category</option>
+          <option>Programming</option>
+          <option>Computer Science</option>
+          <option>Engineering</option>
+          <option>Mathematics</option>
+          <option>Physics</option>
+          <option>History</option>
+          <option>Literature</option>
+          <option>Science</option>
+          <option>Business</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="pages">Number of Pages</label>
+        <input type="number" id="pages" required min="1" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea id="description" required></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="availability">Availability Status</label>
+      <select id="availability">
+        <option value="true">Available</option>
+        <option value="false">Not Available (Borrowed)</option>
+      </select>
+    </div>
+
+    <div style="display:flex; gap:.75rem; margin-top:.5rem;">
+      <button class="btn btn-primary" style="flex:1;" onclick="saveBook()">Save Changes</button>
+      <a href="view_available_books_admin.html" class="btn btn-secondary" style="flex:1; text-align:center;">Cancel</a>
+    </div>
+  </div>
+</main>
+
+<footer>© 2026 Online Library System</footer>
+
+<script src="nav.js"></script>
+<script>
+  requireAuth(true);
+
+  const params = new URLSearchParams(window.location.search);
+  const bookId = parseInt(params.get('id'));
+
+  function loadBook() {
+    if (!bookId) { alert('No book specified.'); history.back(); return; }
+    const books = getBooks();
+    const book  = books.find(b => b.id === bookId);
+    if (!book)  { alert('Book not found.'); history.back(); return; }
+
+    document.getElementById('book-id').value    = book.id;
+    document.getElementById('book-name').value  = book.name;
+    document.getElementById('author').value     = book.author;
+    document.getElementById('year').value       = book.year || '';
+    document.getElementById('pages').value      = book.pages || '';
+    document.getElementById('description').value= book.description || '';
+    document.getElementById('availability').value = String(book.available);
+
+    // Set category
+    const catSel = document.getElementById('category');
+    [...catSel.options].forEach(o => { if (o.value === book.category) o.selected = true; });
+  }
+
+  function saveBook() {
+    const name  = document.getElementById('book-name').value.trim();
+    const author= document.getElementById('author').value.trim();
+    const cat   = document.getElementById('category').value;
+    const desc  = document.getElementById('description').value.trim();
+    const year  = parseInt(document.getElementById('year').value);
+    const pages = parseInt(document.getElementById('pages').value);
+    const avail = document.getElementById('availability').value === 'true';
+
+    const errDiv = document.getElementById('error-msg');
+    const sucDiv = document.getElementById('success-msg');
+    errDiv.style.display = sucDiv.style.display = 'none';
+
+    if (!name || !author || !cat || !desc) {
+      errDiv.textContent = 'Please fill in all required fields.';
+      errDiv.style.display = 'block';
+      return;
+    }
+    if (isNaN(year) || year < 1000 || year > 2099) {
+      errDiv.textContent = 'Please enter a valid publication year (1000–2099).';
+      errDiv.style.display = 'block';
+      return;
+    }
+    if (isNaN(pages) || pages < 1) {
+      errDiv.textContent = 'Please enter a valid number of pages (at least 1).';
+      errDiv.style.display = 'block';
+      return;
+    }
+
+    const books = getBooks().map(b =>
+      b.id === bookId ? { ...b, name, author, category: cat, description: desc, year, pages, available: avail } : b
+    );
+    saveBooks(books);
+
+    sucDiv.textContent = 'Book updated successfully!';
+    sucDiv.style.display = 'block';
+    setTimeout(() => { window.location.href = 'view_available_books_admin.html'; }, 1200);
+  }
+
+  loadBook();
+</script>
+
+</body>
+</html>

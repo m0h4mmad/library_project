@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Book – Online Library</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="brand" href="home_admin.html">📚 Online Library</a>
+    <div id="main-nav"></div>
+  </nav>
+</header>
+
+<div class="page-title">
+  <h1>Add New Book</h1>
+  <p>Fill in the details below to add a new book to the library</p>
+</div>
+
+<main>
+  <div class="form-box" style="max-width:600px;">
+    <div id="error-msg"   class="alert alert-error"   style="display:none;"></div>
+    <div id="success-msg" class="alert alert-success" style="display:none;"></div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="book-id">Book ID</label>
+        <input type="number" id="book-id" placeholder="e.g. 100283" required min="100000" max="999999" />
+      </div>
+      <div class="form-group">
+        <label for="year">Publication Year</label>
+        <input type="number" id="year" placeholder="e.g. 2023" required min="1000" max="2099" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="book-name">Book Title</label>
+      <input type="text" id="book-name" placeholder="Enter the full book title" required />
+    </div>
+
+    <div class="form-group">
+      <label for="author">Author</label>
+      <input type="text" id="author" placeholder="Author full name" required />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="category">Category</label>
+        <select id="category" required>
+          <option value="">Select a category</option>
+          <option>Programming</option>
+          <option>Computer Science</option>
+          <option>Engineering</option>
+          <option>Mathematics</option>
+          <option>Physics</option>
+          <option>History</option>
+          <option>Literature</option>
+          <option>Science</option>
+          <option>Business</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="pages">Number of Pages</label>
+        <input type="number" id="pages" placeholder="e.g. 350" required min="1" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea id="description" placeholder="Write a brief description of the book…" required></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="availability">Availability Status</label>
+      <select id="availability">
+        <option value="true">Available</option>
+        <option value="false">Not Available (Borrowed)</option>
+      </select>
+    </div>
+
+    <div style="display:flex; gap:.75rem; margin-top:.5rem;">
+      <button class="btn btn-primary" style="flex:1;" onclick="addBook()">Add Book</button>
+      <a href="home_admin.html" class="btn btn-secondary" style="flex:1; text-align:center;">Cancel</a>
+    </div>
+  </div>
+</main>
+
+<footer>© 2026 Online Library System</footer>
+
+<script src="nav.js"></script>
+<script>
+  requireAuth(true);
+
+  function addBook() {
+    const id    = parseInt(document.getElementById('book-id').value);
+    const name  = document.getElementById('book-name').value.trim();
+    const author= document.getElementById('author').value.trim();
+    const cat   = document.getElementById('category').value;
+    const desc  = document.getElementById('description').value.trim();
+    const year  = parseInt(document.getElementById('year').value);
+    const pages = parseInt(document.getElementById('pages').value);
+    const avail = document.getElementById('availability').value === 'true';
+
+    const errDiv = document.getElementById('error-msg');
+    const sucDiv = document.getElementById('success-msg');
+    errDiv.style.display = sucDiv.style.display = 'none';
+
+    if (!name || !author || !cat || !desc) {
+      errDiv.textContent = 'Please fill in all required fields.';
+      errDiv.style.display = 'block';
+      return;
+    }
+    if (isNaN(id) || id < 100000 || id > 999999) {
+      errDiv.textContent = 'Book ID must be a 6-digit number (e.g. 100283).';
+      errDiv.style.display = 'block';
+      return;
+    }
+    if (isNaN(year) || year < 1000 || year > 2099) {
+      errDiv.textContent = 'Please enter a valid publication year (1000–2099).';
+      errDiv.style.display = 'block';
+      return;
+    }
+    if (isNaN(pages) || pages < 1) {
+      errDiv.textContent = 'Please enter a valid number of pages (at least 1).';
+      errDiv.style.display = 'block';
+      return;
+    }
+
+    const books = getBooks();
+    if (books.find(b => b.id === id)) {
+      errDiv.textContent = 'A book with this ID already exists.';
+      errDiv.style.display = 'block';
+      return;
+    }
+
+    books.push({ id, name, author, category: cat, description: desc, year, pages, available: avail });
+    saveBooks(books);
+
+    sucDiv.textContent = `"${name}" has been added to the library!`;
+    sucDiv.style.display = 'block';
+
+    // Clear form
+    ['book-id','book-name','author','description','year','pages'].forEach(fid => {
+      document.getElementById(fid).value = '';
+    });
+    document.getElementById('category').value = '';
+
+    setTimeout(() => { window.location.href = 'view_available_books_admin.html'; }, 1500);
+  }
+</script>
+
+</body>
+</html>

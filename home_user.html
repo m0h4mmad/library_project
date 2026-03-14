@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home – Online Library</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="brand" href="home_user.html">📚 Online Library</a>
+    <div id="main-nav"></div>
+  </nav>
+</header>
+
+<div class="page-title">
+  <h1 id="welcome-msg">Welcome to the Library</h1>
+  <p>Search, browse and borrow books from our collection</p>
+</div>
+
+<main>
+  <!-- Search -->
+  <div class="search-bar">
+    <input type="search" id="search-input" placeholder="Search by title, author or category…" oninput="renderBooks()" />
+    <select id="filter-category" onchange="renderBooks()">
+      <option value="">All Categories</option>
+    </select>
+    <select id="filter-status" onchange="renderBooks()">
+      <option value="">All Statuses</option>
+      <option value="true">Available</option>
+      <option value="false">Borrowed</option>
+    </select>
+    <a href="view_available.html" class="btn btn-primary btn-sm">Browse Available</a>
+    <a href="view_borrowed.html"  class="btn btn-secondary btn-sm">My Borrowed</a>
+  </div>
+
+  <div class="section-label">All Books</div>
+  <div id="book-grid" class="book-grid"></div>
+</main>
+
+<footer>© 2026 Online Library System</footer>
+
+<script src="nav.js"></script>
+<script>
+  const user = requireAuth(false);
+  if (user) document.getElementById('welcome-msg').textContent = 'Welcome, ' + user.username;
+  seedBooksIfEmpty();
+
+  function populateCategories() {
+    const cats = [...new Set(getBooks().map(b => b.category))].sort();
+    const sel  = document.getElementById('filter-category');
+    cats.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      sel.appendChild(o);
+    });
+  }
+
+  function renderBooks() {
+    const query  = document.getElementById('search-input').value.toLowerCase();
+    const cat    = document.getElementById('filter-category').value;
+    const status = document.getElementById('filter-status').value;
+
+    let books = getBooks().filter(b => {
+      const matchQ = b.name.toLowerCase().includes(query) ||
+                     b.author.toLowerCase().includes(query) ||
+                     b.category.toLowerCase().includes(query);
+      const matchC = !cat    || b.category === cat;
+      const matchS = status === '' || String(b.available) === status;
+      return matchQ && matchC && matchS;
+    });
+
+    const grid = document.getElementById('book-grid');
+    grid.innerHTML = '';
+
+    if (books.length === 0) {
+      grid.innerHTML = '<p style="color:var(--grey);">No books match your search.</p>';
+      return;
+    }
+
+    books.forEach(book => {
+      const card = document.createElement('div');
+      card.className = 'book-card';
+      card.innerHTML = `
+        <h3>${esc(book.name)}</h3>
+        <p class="author">${esc(book.author)}</p>
+        <small class="category">${esc(book.category)}</small>
+        <span class="state ${book.available ? 'available' : 'borrowed'}">
+          ${book.available ? 'Available' : 'Borrowed'}
+        </span>
+        <div class="card-actions">
+          <a href="book_details.html?id=${book.id}" class="btn btn-secondary btn-sm">Details</a>
+          ${book.available ? `<button class="btn btn-success btn-sm" onclick="borrowBook(${book.id})">Borrow</button>` : ''}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function borrowBook(id) {
+    const borrowed = JSON.parse(localStorage.getItem('library_borrowed') || '[]');
+    const alreadyBorrowed = borrowed.find(b => b.bookId === id && b.userId === user.id);
+    if (alreadyBorrowed) { alert('You already borrowed this book.'); return; }
+
+    borrowed.push({ userId: user.id, bookId: id, borrowDate: new Date().toISOString(), dueDate: new Date(Date.now() + 14*864e5).toISOString() });
+    localStorage.setItem('library_borrowed', JSON.stringify(borrowed));
+
+    const books = getBooks().map(b => b.id === id ? {...b, available: false} : b);
+    saveBooks(books);
+    renderBooks();
+    alert('Book borrowed successfully! Return within 14 days.');
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  populateCategories();
+  renderBooks();
+</script>
+
+</body>
+</html>

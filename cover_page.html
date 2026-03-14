@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cover Page – IS231 Web Technology Project</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { background: linear-gradient(135deg, var(--brown-dk) 0%, #5a3820 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .cover { background: #fff; border-radius: 16px; max-width: 720px; width: 100%; padding: 3rem 3.5rem; box-shadow: 0 24px 60px rgba(0,0,0,.4); }
+    .univ-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--parchment); }
+    .univ-header .icon { font-size: 3rem; }
+    .univ-header h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--brown-dk); line-height: 1.4; }
+    .univ-header p  { font-size: .85rem; color: var(--grey); margin-top: .15rem; }
+    .project-title  { text-align: center; margin: 1.5rem 0; }
+    .project-title h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--brown-dk); line-height: 1.2; }
+    .project-title .sub { font-size: 1rem; color: var(--brown-lt); margin-top: .5rem; }
+    .badge { display: inline-block; background: var(--parchment); border: 1.5px solid var(--border); border-radius: 20px; padding: .3rem 1rem; font-size: .82rem; font-weight: 600; color: var(--brown-md); margin: .25rem; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin: 1.75rem 0; }
+    .info-item label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--brown-lt); display: block; margin-bottom: .25rem; }
+    .info-item p { font-size: .95rem; color: var(--brown-dk); font-weight: 500; }
+    .team-section { margin-top: 1.75rem; }
+    .team-section h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--brown-dk); margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--parchment); }
+    table.team-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    table.team-table th { background: var(--brown-dk); color: var(--parchment); padding: .6rem .9rem; text-align: left; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; }
+    table.team-table td { padding: .65rem .9rem; border-bottom: 1px solid var(--parchment); color: var(--brown-dk); }
+    table.team-table tr:last-child td { border-bottom: none; }
+    table.team-table tr:nth-child(even) td { background: var(--cream); }
+    .footer-note { text-align: center; margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--parchment); font-size: .82rem; color: var(--grey); }
+    .divider { height: 3px; background: linear-gradient(to right, var(--brown-lt), var(--brown-dk), var(--brown-lt)); border-radius: 2px; margin: 1.5rem 0; }
+
+    @media print {
+      body { background: none; padding: 0; }
+      .cover { box-shadow: none; border: 1px solid #ccc; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cover">
+
+  <div class="univ-header">
+    <div class="icon">🎓</div>
+    <div>
+      <h2>Faculty of Computers and Information</h2>
+      <p>Department of Information Systems</p>
+    </div>
+  </div>
+
+  <div class="project-title">
+    <h1>📚 Online Library Website</h1>
+    <p class="sub">IS231 – Web Technology | Project Phase 1</p>
+    <div style="margin-top:1rem;">
+      <span class="badge">Project #2</span>
+      <span class="badge">Phase 1 – HTML Pages</span>
+      <span class="badge">Academic Year 2025 / 2026</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="info-grid">
+    <div class="info-item">
+      <label>Course Code</label>
+      <p>IS231 – Web Technology</p>
+    </div>
+    <div class="info-item">
+      <label>Phase</label>
+      <p>Phase 1 – HTML Design</p>
+    </div>
+    <div class="info-item">
+      <label>Submission Deadline</label>
+      <p>7 March 2026</p>
+    </div>
+    <div class="info-item">
+      <label>Group Number</label>
+      <p id="group-display">Group ___</p>
+    </div>
+    <div class="info-item">
+      <label>Teaching Assistant</label>
+      <p id="ta-display">_______________</p>
+    </div>
+    <div class="info-item">
+      <label>Total HTML Pages</label>
+      <p>11 pages</p>
+    </div>
+  </div>
+
+  <div class="team-section">
+    <h3>Team Members</h3>
+    <table class="team-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Student Name</th>
+          <th>Student ID</th>
+          <th>Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><em style="color:var(--grey);">Leader – fill in name</em></td>
+          <td><em style="color:var(--grey);">ID</em></td>
+          <td>Team Leader</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><em style="color:var(--grey);">fill in name</em></td>
+          <td><em style="color:var(--grey);">ID</em></td>
+          <td>Member</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><em style="color:var(--grey);">fill in name</em></td>
+          <td><em style="color:var(--grey);">ID</em></td>
+          <td>Member</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><em style="color:var(--grey);">fill in name</em></td>
+          <td><em style="color:var(--grey);">ID</em></td>
+          <td>Member</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><em style="color:var(--grey);">fill in name</em></td>
+          <td><em style="color:var(--grey);">ID</em></td>
+          <td>Member</td>
+        </tr>
+        <tr id="member6-row" style="display:none;">
+          <td>6</td>
+          <td><em style="color:var(--grey);">fill in name (optional)</em></td>
+          <td><em style="color:var(--grey);">ID</em></td>
+          <td>Member</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <div style="background:var(--cream); border-radius:8px; padding:1rem 1.25rem; font-size:.88rem; line-height:1.7; color:var(--brown-md);">
+    <strong>Project Description:</strong> An Online Library web application allowing two types of users (Admin and User) to interact with a book collection. Admins can add, edit, and delete books. Users can search, browse, borrow, and return books. The website features 11 HTML pages with full form validation, dynamic navigation, and a consistent editorial design.
+  </div>
+
+  <div class="footer-note">
+    ⚠️ Fill in student names, IDs, group number, and TA name before submitting.<br>
+    Submit as: <code>LeaderID_2_TAname_1.zip</code> via Google Classroom (Team Leader only).
+  </div>
+
+</div>
+
+</body>
+</html>
